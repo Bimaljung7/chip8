@@ -11,3 +11,5 @@ ar=[1,2,3,4,5,6]
  
 for i ,val in enumerate(ar):
     print(i)
+
+    #check matra gareko vayo ki vayena
