@@ -1,4 +1,5 @@
 #starting here 
+from display import Display
 class chip8:
     def __init__(self):
         self.memory=[0]*4096 #bytes
@@ -15,7 +16,7 @@ class chip8:
 
         self.sound_timer=0
 
-        self.display=[[0]*64 for _ in range(32)]
+        self.display=Display()
 
         self.fontset=[
              0xF0, 0x90, 0x90, 0x90, 0xF0, # 0
@@ -55,19 +56,10 @@ class chip8:
     def decode_excute(self,opcode):
         if opcode == 0x00E0:  #clear the screen
             self.display=[[0]*64 for _ in range(32)]
-            print("clear the screen")
-
-    def cpu_cycle(self):  #main cpu cycle
-        opcode=self.opcode_fetch()
-        self.decode_excute(opcode)
-
-        if self.delay_timer > 0:
-            self.delay_timer -=1
-             #ya sund timer ralxu
+           
 
         elif opcode == 0x00EE: #returnig from the subroutine
             self.pc=self.stack.pop()
-            print("return form sunroutine")
 
         elif opcode & 0xF000 == 0x6000: #setting the register vx to nn
             x=(opcode & 0x0F00)>>8
@@ -79,13 +71,37 @@ class chip8:
             nn=opcode & 0x00FF
             self.v[x]=(self.V[x]+nn) & 0xFF
 
-        elif opcode & 0xF000 == 0xA000:
+        elif opcode & 0xF000 == 0xA000: #settiing the index register to address nnn
             address=opcode & 0x0FFF
             self.I=address
             return # doing so the 12 bit adress is stored in i register therefore we dont need to increment pc by2
+        
+        elif opcode & 0xF000 == 0xD000:
+            x=self.V[(opcode & 0x0F00)>> 8]
+            y=self.V[(opcode & 0x00F0)>> 4]
+            n=opcode & 0x000F
 
+            x_pos=self.V[x]
+            y_pos=self.V[y]
 
-        elif opcode & 0xF000 == 0x1000:
+            self.V[0xF]=0 # colliion flag suruma 0
+
+            for row in range(n):
+                graphic_byte=self.momory[self.I +row]
+                for bit in range(8):
+                    pixel=(graphic_byte >> (7-bit) & 1)
+                    if pixel==0:
+                        continue
+
+                    x_coord=(x_pos + bit) % 64
+                    y_coord =(y_pos + row) %32
+
+                    if self.display.pixels[y_coord][x_coord] ==1:
+                        self.V[0xF]=1
+
+                    self.display.pixels[y_coord][x_coord] ^=1
+
+        elif opcode & 0xF000 == 0x1000: #jump to address nnn
             address=opcode & 0x0FFF
             self.pc=address
             return
@@ -94,13 +110,13 @@ class chip8:
 
         self.pc +=2
 
+    def cpu_cycle(self):  #main cpu cycle
+        opcode=self.opcode_fetch()
+        self.decode_excute(opcode)
+
+        if self.delay_timer > 0:
+            self.delay_timer -=1
+             #ya sund timer ralxu
+
         
             
-
-emu =chip8()
-emu.load_rom("rom_data.ch8")
-
-for i in range(10):
-    print(hex(emu.memory[0x200 +i]))
-
-
