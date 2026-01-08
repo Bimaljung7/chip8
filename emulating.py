@@ -1,7 +1,7 @@
 #starting here 
 class chip8:
     def __init__(self):
-        self.memory=[0]*4096
+        self.memory=[0]*4096 #bytes
 
         self.V=[0]*16  # 16 , 8 bit registers
 
@@ -39,11 +39,24 @@ class chip8:
         for i, val in enumerate(self.fontset):
             self.memory[0x50+i]=val #  the reserved fonsets are given into adrr from 80 to up
 
-        print("the chip8 is initiallized")
+        #initailization is done here
 
-           
+    def load_rom(self,rom_data):
+        with open("rom_data.ch8","rb") as f:
+            rom_data=f.read()
+        for i, val in enumerate(rom_data):
+            self.memory[0x200 +i]=val
 
+    def opcode_fetch(self):
+        opcode=self.memory[self.pc]<<8 | self.memory[self.pc +1]
+        return opcode
+    
+    #def decode_excute(self,opcode):
 
+emu =chip8()
+emu.load_rom("rom_data.ch8")
 
+for i in range(10):
+    print(hex(emu.memory[0x200 +i]))
 
 
