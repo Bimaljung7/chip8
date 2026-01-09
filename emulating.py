@@ -17,6 +17,10 @@ class chip8:
 
         self.display=Display
 
+        self.load_rom(rom)
+
+        self.draw_flag=False
+
         self.keys=[0]*16
 
         self.fontset=[
@@ -50,15 +54,22 @@ class chip8:
 
     def opcode_fetch(self):
         opcode=self.memory[self.pc]<<8 | self.memory[self.pc +1]
+        self.pc+=2
         return opcode
     
     def decode_excute(self,opcode):
         if opcode == 0x00E0:  #clear the screen
-            self.display=[[0]*64 for _ in range(32)]
+            self.display.clear()
+            self.draw_flag=True
            
 
         elif opcode == 0x00EE: #returnig from the subroutine
             self.pc=self.stack.pop()
+
+        elif opcode & 0xF000 == 0x2000:  # CALL
+            self.stack.append(self.pc)
+            self.pc = opcode & 0x0FFF
+            return
 
         elif opcode & 0xF000 == 0x6000: #setting the register vx to nn
             x=(opcode & 0x0F00)>>8
@@ -68,7 +79,7 @@ class chip8:
         elif opcode & 0xF000 == 0x7000: #adding nn to register vx
             x=(opcode & 0x0F00)>>8
             nn=opcode & 0x00FF
-            self.v[x]=(self.V[x]+nn) & 0xFF
+            self.V[x]=(self.V[x]+nn) & 0xFF
 
         elif opcode & 0xF000 == 0xA000: #settiing the index register to address nnn
             address=opcode & 0x0FFF
@@ -76,8 +87,8 @@ class chip8:
             return # doing so the 12 bit adress is stored in i register therefore we dont need to increment pc by2
         
         elif opcode & 0xF000 == 0xD000:  #DXYN
-            x=[(opcode & 0x0F00)>> 8]
-            y=[(opcode & 0x00F0)>> 4]
+            x=(opcode & 0x0F00)>> 8
+            y=(opcode & 0x00F0)>> 4
             n=opcode & 0x000F
 
             x_pos=self.V[x]
@@ -100,24 +111,32 @@ class chip8:
 
                     self.display.pixels[y_coord][x_coord] ^=1
 
+            self.draw_flag=True
+
         elif opcode & 0xF000 == 0x1000: #jump to address nnn
             address=opcode & 0x0FFF
             self.pc=address
             return
         else:
             print(f"unknown opcode: {hex(opcode)}")
+            quit()
 
-        self.pc +=2
+        
 
     def cpu_cycle(self):  #main cpu cycle
         opcode=self.opcode_fetch()
         self.decode_excute(opcode)
-
-        self.pc+=2
 
         if self.delay_timer > 0:
             self.delay_timer -=1
              #ya sund timer ralxu
 
         
-            
+# file=open("games\\ibm.ch8","rb")   
+# rom=file.read()        
+# test=chip8(None,rom)
+# test.load_rom(rom)
+# op=test.opcode_fetch()
+# print(test.decode_excute(op))
+
+# #print(test.memory[0x202])

@@ -14,5 +14,8 @@ clock=pygame.time.Clock()
 running=True
 while running:
     cpu.cpu_cycle()
-    display.draw()
+    if cpu.draw_flag:
+      display.draw()
+      cpu.draw_flag=False
+      
     clock.tick(60)
