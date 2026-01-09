@@ -1,7 +1,6 @@
 #starting here 
-from display import Display
 class chip8:
-    def __init__(self):
+    def __init__(self, Display, rom: bytes):
         self.memory=[0]*4096 #bytes
 
         self.V=[0]*16  # 16 , 8 bit registers
@@ -16,7 +15,9 @@ class chip8:
 
         self.sound_timer=0
 
-        self.display=Display()
+        self.display=Display
+
+        self.keys=[0]*16
 
         self.fontset=[
              0xF0, 0x90, 0x90, 0x90, 0xF0, # 0
@@ -42,10 +43,8 @@ class chip8:
 
         #initailization is done here
 
-    def load_rom(self,rom_data):
-        with open("rom_data.ch8","rb") as f:
-            rom_data=f.read()
-        for i, val in enumerate(rom_data):
+    def load_rom(self,rom):
+        for i, val in enumerate(rom):
             self.memory[0x200 +i]=val
 
 
@@ -76,9 +75,9 @@ class chip8:
             self.I=address
             return # doing so the 12 bit adress is stored in i register therefore we dont need to increment pc by2
         
-        elif opcode & 0xF000 == 0xD000:
-            x=self.V[(opcode & 0x0F00)>> 8]
-            y=self.V[(opcode & 0x00F0)>> 4]
+        elif opcode & 0xF000 == 0xD000:  #DXYN
+            x=[(opcode & 0x0F00)>> 8]
+            y=[(opcode & 0x00F0)>> 4]
             n=opcode & 0x000F
 
             x_pos=self.V[x]
@@ -87,9 +86,9 @@ class chip8:
             self.V[0xF]=0 # colliion flag suruma 0
 
             for row in range(n):
-                graphic_byte=self.momory[self.I +row]
+                sprite_byte=self.memory[self.I +row]
                 for bit in range(8):
-                    pixel=(graphic_byte >> (7-bit) & 1)
+                    pixel=(sprite_byte>> (7-bit) & 1)
                     if pixel==0:
                         continue
 
@@ -113,6 +112,8 @@ class chip8:
     def cpu_cycle(self):  #main cpu cycle
         opcode=self.opcode_fetch()
         self.decode_excute(opcode)
+
+        self.pc+=2
 
         if self.delay_timer > 0:
             self.delay_timer -=1
