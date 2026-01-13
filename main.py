@@ -5,7 +5,7 @@ from file_manager import game_loader
 
 pygame.init()
 
-load_game=game_loader("games\\ibm.ch8")
+load_game=game_loader("games\\pong.ch8")
 display=Display()
 keypad=keypad()
 cpu=chip8(display,load_game)

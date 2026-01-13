@@ -1,5 +1,6 @@
 #starting here 
 import random
+import pygame
 class chip8:
     def __init__(self, Display, rom: bytes):
         self.memory=[0]*4096 #bytes
@@ -16,8 +17,10 @@ class chip8:
 
         self.sound_timer=0
 
-        self.display=Display
+        self.beep=pygame.mixer.Sound("chip8_beep.wav")
 
+        self.display=Display
+        pygame.mixer.init()
         self.load_rom(rom)
 
         self.draw_flag=False
@@ -271,4 +274,4 @@ class chip8:
 
         if self.sound_timer >0:
             self.sound_timer -=1
-            print("beeep")
+            self.beep
